@@ -1,8 +1,29 @@
 datasource db {
     provider = "postgresql" 
     url      = env("DATABASE_URL")
+    schemas  = ["public", "ADMIN"]
 }
 generator client {
     provider = "prisma-client-js"
-    schemas  = ["ADMIN"]
+    previewFeatures = ["multiSchema"]
+}
+
+model user_companies {
+  id         String   @id @default(uuid())
+  companie   String
+  email      String   @unique
+  password   String
+  name       String?
+  role       String
+  photo      String?
+  address    String?
+  cnpj       String?
+  telephone  String?
+  status     String   @default("active")
+  plan       String?
+  city       String?
+  website    String?
+  created    DateTime @default(now())
+
+  @@schema("ADMIN")
 }
