@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { prisma } from "prisma/cliente";
+import { forgottenPasswordDto } from "./dto/forgottenPassword.dto";
 //import { LoginDto } from "./dto/login.dto";
 //import * as bcrypt from "bcrypt";
 
@@ -17,5 +18,9 @@ export class LoginRepository{
     async findLogin(email: string){
         const findMany = await prisma.user_companies.findUnique({where : {email}})
         return findMany
+    }
+
+    async createCode(data: {id_user: string, companie: string, email: string, role: string, code: string, expiresAt: Date}){
+        return await prisma.forgot_password.create({data})
     }
 }
