@@ -16,6 +16,7 @@ export class LoginController{
     }
 
     @Post('forgot-password')
+    @HttpCode(200)
     forgottenPassword(@Body() body: forgottenPasswordDto){
         return this.loginService.forgottenPassword(body)
     }

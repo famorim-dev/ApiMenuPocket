@@ -46,29 +46,35 @@ export class LoginService{
 
     async forgottenPassword(body: forgottenPasswordDto){
         const {email} = body
+        
+        try{
+            const user = await this.loginRepository.findLogin(email)
 
-        const user = await this.loginRepository.findLogin(email)
-
-        if(!user){
-            return 'Se o email existir, você receberá um link'
-        }
-
-        const code = randomInt(0, 10000).toString().padStart(4, '0')
-
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
-
-        await this.loginRepository.createCode({
-                id_user: user.id,
-                companie: user.companie,
-                email: user.email,
-                role: user.role,
-                code: code,
-                expiresAt: expiresAt
+            if(!user){
+                return 'Se o email existir, você receberá um link'
             }
-        )
 
-        await this.mailService.sendResetCode(user.email, code)
+            const code = randomInt(0, 10000).toString().padStart(4, '0')
 
-        return 'Se o email existir, você receberá um link'
+            const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
+
+            await this.loginRepository.createCode({
+                    id_user: user.id,
+                    companie: user.companie,
+                    email: user.email,
+                    role: user.role,
+                    code: code,
+                    expiresAt: expiresAt
+                }
+            )
+
+            await this.mailService.sendResetCode(user.email, code)
+
+            console.log("cheguei aqui")
+            return 'Se o email existir, você receberá um link'
+            
+        }catch(e){
+            return "Se o email existir, você receberá um link"
+        }
     }
 }

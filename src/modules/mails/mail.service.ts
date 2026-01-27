@@ -1,20 +1,39 @@
-import { Injectable } from '@nestjs/common';
-import { Resend } from 'resend';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import nodemailer, { Transporter } from 'nodemailer';
 
 @Injectable()
 export class MailService {
-  private resend = new Resend(process.env.RESEND_API_KEY);
+  private transporter: Transporter;
+
+  constructor() {
+    this.transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,                 
+      secure: false,              
+      auth: {
+        user: process.env.SMTP_USER, 
+        pass: process.env.SMTP_PASS, 
+      },
+    });
+  }
 
   async sendResetCode(email: string, code: string) {
-    await this.resend.emails.send({
-      from: 'Meu App <no-reply@meuapp.com>',
-      to: email,
-      subject: 'Código de recuperação',
-      html: `
-        <h2>Recuperação de senha</h2>
-        <p>Seu código:</p>
-        <h1>${code}</h1>
-      `,
-    });
+    try {
+      const info = await this.transporter.sendMail({
+        from: `"MenuPocket" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: 'Código de recuperação',
+        html: `
+          <h2>Recuperação de senha</h2>
+          <p>Seu código:</p>
+          <h1>${code}</h1>
+        `,
+      });
+
+      return info;
+      
+    } catch (error) {
+      throw new InternalServerErrorException("Erro interno no Servidor")
+    }
   }
 }
