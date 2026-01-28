@@ -1,7 +1,7 @@
 datasource db {
     provider = "postgresql" 
     url      = env("DATABASE_URL")
-    schemas  = ["public", "ADMIN"]
+    schemas  = ["public", "ADMIN", "MENU"]
 }
 generator client {
     provider = "prisma-client-js"
@@ -42,4 +42,39 @@ model  forgot_password{
   update_password    DateTime       @default(now())
 
   @@schema("ADMIN")
+}
+
+model restaurants{
+  id                 String         @id @default(uuid())
+  id_user            String
+  companie           String
+  name               String
+  banner             String
+  photo              String?
+  address            String?
+  cnpj               String?
+  telephone          String?
+  status             String         @default("active")
+  plan               String?
+  city               String?
+  website            String?
+  created            DateTime       @default(now())
+
+  @@schema("ADMIN")
+}
+
+model items{
+  id                 String         @id @default(uuid())
+  id_restaurants     String
+  name_restaurants   String
+  name               String
+  value              String
+  description        String?
+  category           String
+  promotion          Boolean        @default(false)
+  value_promotion    String?
+  highlight          Boolean        @default(false)
+  created            DateTime       @default(now())
+
+  @@schema("MENU")
 }

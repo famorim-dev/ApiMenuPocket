@@ -37,7 +37,7 @@ export class LoginService{
                 throw new UnauthorizedException("Erro ao realizar Login!")
             }
 
-            const payload = { sub: user.id, email: user.email, role: user.role }
+            const payload = { sub: user.id, email: user.email, role: user.role, plan: user.plan }
             const token = this.jwtService.sign(payload)
 
             return token
