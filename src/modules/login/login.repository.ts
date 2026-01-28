@@ -23,4 +23,24 @@ export class LoginRepository{
     async createCode(data: {id_user: string, companie: string, email: string, role: string, code: string, expiresAt: Date}){
         return await prisma.forgot_password.create({data})
     }
+
+    async verifyCode(id: string){
+        return await prisma.forgot_password.findUnique({where: {id}})
+    }
+
+    async attempts(id: string){
+        return await prisma.forgot_password.update({where: {id}, data: {attempts : {increment: 1}}})
+    }
+
+    async usedTrue(id: string){
+        return await prisma.forgot_password.update({where: {id}, data: {used : true}})
+    }
+
+    async findUser(id_user: string){
+        return await prisma.user_companies.findUnique({where : {id: id_user}})
+    }
+
+    async resetPassword(id: string, hash: string){
+        return await prisma.user_companies.updateMany({where: {id}, data: {password: hash}})
+    }
 }

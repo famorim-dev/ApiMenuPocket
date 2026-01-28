@@ -1,11 +1,13 @@
-import { Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
+import { HttpException, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
 import { LoginDto } from "./dto/login.dto";
 import { LoginRepository } from "./login.repository";
-import * as bcrypt from "bcrypt";
 import { JwtService } from "@nestjs/jwt";
 import { forgottenPasswordDto } from "./dto/forgottenPassword.dto";
 import { randomInt } from "crypto";
 import { MailService } from "../mails/mail.service";
+import { validatePasswordDto } from "./dto/validatePassword.dto";
+import { ResetPasswordDto } from "./dto/resetPassword.dto";
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class LoginService{
@@ -58,7 +60,7 @@ export class LoginService{
 
             const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
 
-            await this.loginRepository.createCode({
+            const registerCode = await this.loginRepository.createCode({
                     id_user: user.id,
                     companie: user.companie,
                     email: user.email,
@@ -70,11 +72,86 @@ export class LoginService{
 
             await this.mailService.sendResetCode(user.email, code)
 
-            console.log("cheguei aqui")
-            return 'Se o email existir, você receberá um link'
-            
+            return registerCode.id
+
         }catch(e){
             return "Se o email existir, você receberá um link"
+        }
+    }
+
+    async verifyCode(body: validatePasswordDto){
+        const {code, id} = body
+
+        try{
+            await this.loginRepository.attempts(id)
+            
+            const validate = await this.loginRepository.verifyCode(id)
+
+            if(!validate){
+                throw new UnauthorizedException("Não existe codigo para seu Usuario")
+            }
+
+            if(validate.attempts >= 7){
+                await this.loginRepository.usedTrue(id)
+                throw new UnauthorizedException("Numero de tentativas esgotadas, tente novamente mais tarde!")
+            }
+            
+            if (validate.code !== code ){
+                throw new UnauthorizedException("Codigo Invalido")
+            }
+            
+            if (validate.used){
+                throw new UnauthorizedException("Codigo Ja está em uso")
+            }
+            
+            if(validate.expiresAt < new Date()){
+                throw new UnauthorizedException("Codigo expirado")
+            }
+
+            return {id:validate.id, id_user: validate.id_user}
+        }catch(e){
+            if( e instanceof HttpException){
+                throw e
+            }
+            throw new InternalServerErrorException("Erro Interno do Servidor")
+        }
+    }
+
+    async resetPassword(body: ResetPasswordDto){
+        const {id,id_user, password} = body
+
+        try{
+            const user = await this.loginRepository.findUser(id_user)
+
+            if(!user){
+                throw new UnauthorizedException("Não foi possivel alterar a senha")
+            }
+
+            const code = await this.loginRepository.verifyCode(id)
+
+            if (!code){
+                throw new UnauthorizedException("Codigo Inexistente")
+            }
+
+            if (code.used){
+                throw new UnauthorizedException("Codigo Ja está em uso")
+            }
+
+            const hash = await bcrypt.hash(password, 10)
+            const resetPassword = this.loginRepository.resetPassword(id_user, hash)
+
+            if (!resetPassword){
+                throw new UnauthorizedException("Não foi possivel alterar a senha")
+            }
+
+            await this.loginRepository.usedTrue(id)
+
+            return "Sua senha foi atualizada!"
+        }catch(e){
+            if( e instanceof HttpException){
+                throw e
+            }
+            throw new InternalServerErrorException("Erro Interno do Servidor")
         }
     }
 }
