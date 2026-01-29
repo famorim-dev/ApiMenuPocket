@@ -6,9 +6,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt.guard';
 import { JwtStrategy } from './auth/jwt.estrategy';
 import { PassportModule } from '@nestjs/passport';
+import { ItemsModule } from './modules/items/items.module';
 
 @Module({
-  imports: [PassportModule.register({defaultStrategy: 'jwt'}), ConfigModule.forRoot({isGlobal: true}), LoginModule, RestaurantsModule],
+  imports: [PassportModule.register({defaultStrategy: 'jwt'}), ConfigModule.forRoot({isGlobal: true}), LoginModule, RestaurantsModule, ItemsModule],
   controllers: [],
   providers: [{provide: APP_GUARD, useClass: JwtAuthGuard}, JwtStrategy],
   exports: [PassportModule],
