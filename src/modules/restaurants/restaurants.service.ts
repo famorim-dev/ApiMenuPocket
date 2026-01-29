@@ -2,27 +2,26 @@ import { HttpException, InternalServerErrorException, UnauthorizedException } fr
 import { CreateDto } from "./dto/create.dto";
 import { prisma } from "prisma/cliente";
 import { StatusDto } from "./dto/status.dto";
-
-
+import { JwtUser } from "src/auth/types/jwt.types";
 
 export class RestaurantsService{
 
 
-    async create(Body: CreateDto){
-        const {id_user, name, banner, photo, address, cnpj, telephone, city, website} = Body
+    async create(user: JwtUser , Body: CreateDto){
+        const {name, banner, photo, address, cnpj, telephone, city, website} = Body
 
         try{
-            const user = await prisma.user_companies.findUnique({where: {id: id_user}})
+            const getUser = await prisma.user_companies.findUnique({where: {id: user.id}})
 
-            if (!user){
-                throw new UnauthorizedException("Usuario não encontrado")
+            if(!getUser){
+                throw new UnauthorizedException("Usuario Não encontrado")
             }
 
             if (user.role !== "admin"){
                 throw new UnauthorizedException("Somente Admin podem registrar novos restaurantes")
             }
 
-            await prisma.restaurants.create({data: {id_user, companie:user.companie, name, banner, photo, address, cnpj, telephone, plan:user.plan, city, website}})
+            await prisma.restaurants.create({data: {id_user: user.id, companie: getUser.companie, name, banner, photo, address, cnpj, telephone, plan:user.plan, city, website}})
 
             return "Restaurante Criado!"
         }catch(e){
@@ -33,17 +32,10 @@ export class RestaurantsService{
         }
     }
 
-
-    async status(Body: StatusDto){
-        const {id, id_user, status} = Body
+    async status(user: JwtUser, Body: StatusDto){
+        const {id, status} = Body
 
         try{
-            const user = await prisma.user_companies.findUnique({where: {id: id_user}})
-
-            if (!user){
-                throw new UnauthorizedException("Usuario não encontrado")
-            }
-
             if (user.role !== "admin"){
                 throw new UnauthorizedException("Somente Admin podem registrar novos restaurantes")
             }
@@ -55,8 +47,7 @@ export class RestaurantsService{
 
             await prisma.restaurants.update({where: {id: restaurants.id}, data: {status: status}})
             
-            return "status Atualizado"
-
+            return "Status Atualizado"
         }catch(e){
             if (e instanceof HttpException){
                 throw e
