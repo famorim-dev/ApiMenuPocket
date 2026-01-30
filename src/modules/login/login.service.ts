@@ -42,6 +42,9 @@ export class LoginService{
 
             return token
         }catch(e){
+            if (e instanceof HttpException){
+                throw e
+            }
             throw new InternalServerErrorException("Erro ao realizar Login!")
         }
     }
