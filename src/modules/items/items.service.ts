@@ -1,6 +1,7 @@
 import { BadRequestException, HttpException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { CreateDto } from "./dto/create.dto";
 import { prisma } from "prisma/cliente";
+import { JwtUser } from "src/auth/types/jwt.types";
 
 
 @Injectable()
